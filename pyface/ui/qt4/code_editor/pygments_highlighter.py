@@ -117,7 +117,7 @@ class BlockUserData(QtGui.QTextBlockUserData):
 
     def __repr__(self):
         attrs = ['syntax_stack']
-        kwds = ', '.join([ '%s=%r' % (attr, getattr(self, attr))
+        kwds = ', '.join([ '%s=%r' % (attr, getattr(self, attr, None))
                            for attr in attrs ])
         return 'BlockUserData(%s)' % kwds
 
@@ -145,9 +145,13 @@ class PygmentsHighlighter(QtGui.QSyntaxHighlighter):
         prev_data = self.previous_block_data()
 
         if prev_data is not None:
-            self._lexer._saved_state_stack = prev_data.syntax_stack
-        elif hasattr(self._lexer, '_saved_state_stack'):
-            del self._lexer._saved_state_stack
+            if not isinstance(prev_data, BlockUserData):
+                if self.currentBlock().previous().isValid():
+                    self.currentBlock().previous().setUserData(None)
+            else:
+                self._lexer._epd_state_stack = prev_data.syntax_stack
+        elif hasattr(self._lexer, '_epd_state_stack'):
+            del self._lexer._epd_state_stack
 
         index = 0
         # Lex the text using Pygments
